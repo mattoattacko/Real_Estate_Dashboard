@@ -10,4 +10,7 @@ we added "scripts": { "start": "node server.js" } to package.json to run the ser
 
 we use the models we created (via the schemas) to create the instances of the data we want to save in the database
 
-if not working, check the routes in the index.js comments
+how the new user route works: 
+1. We have a user route to create a "user" which is a post route (in user.routes.js) on '/' (app.use('/api/v1/users', userRouter in index.js)
+2. That function is called createUser in user.controller.js
+3. should return status of 200
