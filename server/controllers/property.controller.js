@@ -15,7 +15,13 @@ cloudinary.config({
 
 //controllers
 const getAllProperties = async (req, res) => {
+  try {
+    const properties = await Property.find({}).limit(req.query._end); //limit the number of properties we get from the database to however many there are
 
+    res.status(200).json(properties);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 
 const getPropertyDetail = async (req, res) => {
