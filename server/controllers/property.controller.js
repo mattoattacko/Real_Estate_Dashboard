@@ -15,8 +15,33 @@ cloudinary.config({
 
 //controllers
 const getAllProperties = async (req, res) => {
+
+  const { _start, _end, _order, _sort, title_like = "", propertyType = "" } = req.query; //get the query parameters from the frontend
+
+  const query = {}
+
+  //if our propertyType is not empty, we add it to our query object
+  if (propertyType !== "") {
+    query.propertyType = propertyType;
+  }
+
+  //if our title is not empty, we add it to our query object
+  if (title_like) {
+    query.title = { $regex: title_like, $options: 'i' }; //options i means case insensitive
+  }
+
   try {
-    const properties = await Property.find({}).limit(req.query._end); //limit the number of properties we get from the database to however many there are
+
+    const count = await Property.countDocuments({ query }); //count the number of properties we get from the database
+    const properties = await Property
+      .find(query) //find the properties that match our query
+      .limit(_end) //limit the number of properties we get from the database
+      .skip(_start) //skip the number of properties we get from the database
+      .sort({ [_sort]: _order }) //sort the properties we get from the database
+
+    //set the headers for pagination
+    res.header('x-total-count', count); //set the total number of properties we get from the database
+    res.header('Access-Control-Expose-Headers', 'x-total-count'); //expose the headers to the frontend so that we know the total count of our resources
 
     res.status(200).json(properties);
   } catch (error) {
