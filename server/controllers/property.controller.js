@@ -49,8 +49,17 @@ const getAllProperties = async (req, res) => {
   }
 }
 
+//The logic to get a Property Detail
 const getPropertyDetail = async (req, res) => {
+  const { id } = req.params; //get the id we are trying to get from the url
+  
+  const propertyExists = await Property.findOne({ _id: id }).populate('creator');//check if a property exists. If it does try and reach it. If it does, we do .populate('creator') to get/add the creator of the property
 
+  if(propertyExists) {
+    res.status(200).json(propertyExists); //if the property exists, we send it to the frontend
+  } else {
+    res.status(404).json({ message: 'Property not found' }); //if the property does not exist, we send a 404 error to the frontend
+  }
 }
 
 //The logic to create a property
