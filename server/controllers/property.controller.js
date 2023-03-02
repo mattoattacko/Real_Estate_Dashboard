@@ -110,12 +110,59 @@ const createProperty = async (req, res) => {
   }
 }
 
+//The logic to update/edit a property
 const updateProperty = async (req, res) => {
+  //need to know which property we are trying to update
+  try {
+    const { id } = req.params; //get the id we are trying to update from the url so that we know which one we are updating.
+    const {title, description, propertyType, location, price, photo} = req.body; //get all the properties from the frontend. 
 
+    //need to reupload the photo to cloudinary
+    const photoUrl = await cloudinary.uploader.upload(photo);
+
+    await Property.findByIdAndUpdate({ _id: id }, {
+      title,
+      description,
+      propertyType,
+      location,
+      price,
+      photo: photoUrl.url || photo //if there is no photoUrl, we use the photo we already have
+    })
+
+    res.status(200).json({ message: 'Property updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 
+//The logic to delete a property
 const deleteProperty = async (req, res) => {
+  try {
+    const { id } = req.params; //get the id we are trying to delete from the url
 
+    const propertyToDelete = await Property.findById({ _id: id }).populate('creator'); //find the property we are trying to delete
+
+    //also need to delete the ID of the property from the user's allProperties array
+    //if there is no property to delete
+    if (!propertyToDelete) throw new Error('Property not found');
+
+    //else we create a new session
+    const session = await mongoose.startSession();
+    session.startTransaction(); //make sure we start a transaction
+
+    propertyToDelete.remove({ session }); //remove the property from the database
+    
+    propertyToDelete.creator.allProperties.pull(propertyToDelete); //remove the property from the user's allProperties array. 
+    //can we chain .propertyToDelete._id here? I think we can. 
+
+    await propertyToDelete.creator.save({ session }); //save the session
+    await session.commitTransaction(); //commit the transaction
+
+    res.status(200).json({ message: 'Property deleted successfully' });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 
 export {
